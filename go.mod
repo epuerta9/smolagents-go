@@ -1,6 +1,6 @@
 module github.com/epuerta9/smolagents-go
 
-go 1.22.5
+go 1.24.1
 
 require github.com/openai/openai-go v0.1.0-alpha.62
 
