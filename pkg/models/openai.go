@@ -113,7 +113,7 @@ func (m *OpenAIModel) generateInternal(ctx context.Context, messages []Message, 
 	}
 
 	// Add tools if provided
-	if tools != nil && len(tools) > 0 {
+	if len(tools) > 0 {
 		var toolsParam []openai.ChatCompletionToolParam
 		for _, tool := range tools {
 			// Extract tool properties
@@ -154,7 +154,7 @@ func (m *OpenAIModel) generateInternal(ctx context.Context, messages []Message, 
 	var completion *openai.ChatCompletion
 	var err error
 
-	if tools != nil && len(tools) > 0 {
+	if len(tools) > 0 {
 		// Only set tool_choice when tools are provided
 		completion, err = m.client.Chat.Completions.New(
 			ctx,
@@ -177,7 +177,7 @@ func (m *OpenAIModel) generateInternal(ctx context.Context, messages []Message, 
 	choice := completion.Choices[0]
 
 	// Check if there's a tool call
-	if choice.Message.ToolCalls != nil && len(choice.Message.ToolCalls) > 0 {
+	if len(choice.Message.ToolCalls) > 0 {
 		toolCall := choice.Message.ToolCalls[0]
 
 		// Create a properly formatted tool call response
