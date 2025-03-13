@@ -342,13 +342,3 @@ func TestMemoryString(t *testing.T) {
 		t.Error("Expected string to mention tool call name")
 	}
 }
-
-// Helper function to check if a slice contains a string
-func containsString(slice []string, str string) bool {
-	for _, item := range slice {
-		if item == str {
-			return true
-		}
-	}
-	return false
-}

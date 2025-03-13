@@ -48,63 +48,8 @@ When you have the answer to the user's request, respond with the relevant inform
 	return agent, nil
 }
 
-// Step executes a single step of the agent's reasoning.
-func (a *CodeAgent) Step(ctx context.Context, step *memory.ActionStep) (any, error) {
-	// Generate model response
-	response, err := a.model.Generate(ctx, step.Messages)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate response: %w", err)
-	}
-
-	// Add assistant response to memory
-	step.Messages = append(step.Messages, models.Message{
-		Role:    models.RoleAssistant,
-		Content: response,
-	})
-
-	// Check if the response contains code blocks
-	codeBlocks := extractCodeBlocks(response)
-	if len(codeBlocks) > 0 {
-		// For simplicity, we'll just execute the first code block that contains a tool call
-		for _, codeBlock := range codeBlocks {
-			// Check if the code block contains a tool call
-			toolName, args, err := a.extractToolCallFromCode(codeBlock)
-			if err != nil {
-				return nil, fmt.Errorf("failed to extract tool call from code: %w", err)
-			}
-
-			if toolName != "" {
-				// Execute the tool call
-				result, err := a.executeToolCall(ctx, step, toolName, args)
-				if err != nil {
-					return nil, fmt.Errorf("failed to execute tool call: %w", err)
-				}
-
-				// Add tool result to memory
-				resultStr := fmt.Sprintf("%v", result)
-				step.Messages = append(step.Messages, models.Message{
-					Role:    models.RoleTool,
-					Name:    toolName,
-					Content: resultStr,
-				})
-
-				// No final answer yet, continue to next step
-				return nil, nil
-			}
-		}
-	}
-
-	// Check if the response is a direct tool call (JSON format)
-	toolName, args, err := a.extractToolCall(response)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract tool call: %w", err)
-	}
-
-	// If no tool call, treat as final answer
-	if toolName == "" {
-		return response, nil
-	}
-
+func (a *CodeAgent) executeAndAddResToMem(ctx context.Context, step *memory.ActionStep, toolName string,
+	args map[string]any) (any, error) {
 	// Execute the tool call
 	result, err := a.executeToolCall(ctx, step, toolName, args)
 	if err != nil {
@@ -121,6 +66,50 @@ func (a *CodeAgent) Step(ctx context.Context, step *memory.ActionStep) (any, err
 
 	// No final answer yet, continue to next step
 	return nil, nil
+}
+
+// Step executes a single step of the agent's reasoning.
+func (a *CodeAgent) Step(ctx context.Context, step *memory.ActionStep) (any, error) {
+	// Generate model response
+	response, err := a.model.Generate(ctx, step.Messages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate response: %w", err)
+	}
+
+	// Add assistant response to memory
+	step.Messages = append(step.Messages, models.Message{
+		Role:    models.RoleAssistant,
+		Content: response,
+	})
+
+	// Check if the response contains code blocks
+	codeBlocks := extractCodeBlocks(response)
+
+	// For simplicity, we'll just execute the first code block that contains a tool call
+	for _, codeBlock := range codeBlocks {
+		// Check if the code block contains a tool call
+		toolName, args, err := a.extractToolCallFromCode(codeBlock)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract tool call from code: %w", err)
+		}
+
+		if toolName != "" {
+			return a.executeAndAddResToMem(ctx, step, toolName, args)
+		}
+	}
+
+	// Check if the response is a direct tool call (JSON format)
+	toolName, args, err := a.extractToolCall(response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract tool call: %w", err)
+	}
+
+	// If no tool call, treat as final answer
+	if toolName == "" {
+		return response, nil
+	}
+
+	return a.executeAndAddResToMem(ctx, step, toolName, args)
 }
 
 // extractCodeBlocks extracts code blocks from a string.
