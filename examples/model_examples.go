@@ -45,15 +45,14 @@ func main() {
 	)
 	runExample(weatherTool, openaiModel, "What's the weather like in London?")
 
-	// Example 3: Using AzureOpenAIModel
-	fmt.Println("\nExample 3: Using AzureOpenAIModel")
-	azureModel := models.NewAzureOpenAIModel(
-		"gpt-4", // This should be your deployment name
-		models.WithApiKey(os.Getenv("AZURE_OPENAI_API_KEY")),
-		models.WithAzureEndpoint(os.Getenv("AZURE_OPENAI_ENDPOINT")),
+	// Example 3: Using AnthropicModel
+	fmt.Println("\nExample 3: Using AnthropicModel")
+	anthropicModel := models.NewAnthropicModel(
+		"claude-3-5-haiku-latest",
+		models.WithApiKey(os.Getenv("ANTHROPIC_API_KEY")),
 		models.WithMaxTokens(1024),
 	)
-	runExample(weatherTool, azureModel, "What's the weather like in Tokyo?")
+	runExample(weatherTool, anthropicModel, "What's the weather like in Berlin?")
 }
 
 func runExample(tool tools.Tool, model models.Model, query string) {

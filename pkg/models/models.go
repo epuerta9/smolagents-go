@@ -63,6 +63,8 @@ func WithMaxTokens(maxTokens int) Option {
 			m.MaxTokens = maxTokens
 		case *OpenAIModel:
 			m.MaxTokens = maxTokens
+		case *AnthropicModel:
+			m.MaxTokens = maxTokens
 		}
 	}
 }
@@ -75,6 +77,8 @@ func WithApiKey(apiKey string) Option {
 			m.ApiKey = apiKey
 		case *OpenAIModel:
 			m.ApiKey = apiKey
+		case *AnthropicModel:
+			m.ApiKey = apiKey
 		}
 	}
 }
@@ -86,6 +90,8 @@ func WithHttpClient(client *http.Client) Option {
 		case *HfApiModel:
 			m.Client = client
 		case *OpenAIModel:
+			m.httpClient = client
+		case *AnthropicModel:
 			m.httpClient = client
 		}
 	}
